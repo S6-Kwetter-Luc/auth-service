@@ -1,0 +1,62 @@
+﻿name: .NET Core
+
+on:
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  build:
+    name: build and test on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+
+    steps:
+      - uses: actions/checkout@v2
+      - name: Setup .NET Core
+        uses: actions/setup-dotnet@v1
+        with:
+          dotnet-version: 3.1.201
+      - name: Install dependencies
+        run: dotnet restore
+      - name: Build
+        run: dotnet build
+      - name: Test
+        run: dotnet test
+      - name: Publish
+        run: dotnet publish -c Release -o out
+      - name: Upload release artifact
+        uses: actions/upload-artifact@v1
+        with:
+          name: release-artifact
+          path: ./out/auth-service.dll
+      - name: Upload Dockerfile artifact
+        uses: actions/upload-artifact@v1
+        with:
+          name: dockerfile-artifact
+          path: ./Dockerfile
+
+  delivery:
+    needs: build
+    runs-on: ubuntu-18.04
+    steps:
+      - name: Download release artifact
+        uses: actions/download-artifact@v1
+        with:
+          name: release-artifact
+          path: .
+      - name: Download Dockerfile artifact
+        uses: actions/download-artifact@v1
+        with:
+          name: dockerfile-artifact
+          path: .
+      - name: Deliver Docker image
+        env:
+          CONTAINER_IMAGE: s6individualproject/${{ secrets.REPOSITORY_NAME }}:${{ github.sha }}
+          CONTAINER_IMAGE_LATEST: s6individualproject/${{ secrets.REPOSITORY_NAME }}:latest
+        run: |
+          docker login -u ${{ secrets.DOCKER_USER }} -p ${{ secrets.DOCKER_ACCESS_TOKEN }}
+          docker build -t $CONTAINER_IMAGE -t $CONTAINER_IMAGE_LATEST .
+          docker push $CONTAINER_IMAGE
+          docker push $CONTAINER_IMAGE_LATEST
