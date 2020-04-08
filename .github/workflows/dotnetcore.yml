@@ -1,11 +1,17 @@
 ﻿name: .NET Core
 
-on: [pull_request]
+on:
+  pull_request:
+    branches: [ master ]
 
 jobs:
   build:
-    name: "build and test"
-    runs-on: ubuntu-18.04
+    name: build and test on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+
     steps:
       - uses: actions/checkout@v2
       - name: Setup .NET Core
