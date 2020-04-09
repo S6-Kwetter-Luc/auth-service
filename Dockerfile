@@ -1,6 +1,6 @@
 FROM mcr.microsoft.com/dotnet/core/aspnet:3.1.3-bionic
 
 WORKDIR /app
-COPY /*.dll .
+COPY /* ./
 
 ENTRYPOINT ["dotnet", "*.dll"]
