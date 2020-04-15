@@ -75,8 +75,9 @@ namespace auth_service.Services
                 Password = password,
                 OauthIssuer = "none",
             };
+            await _repository.Create(user);
 
-            return (await _repository.Create(user)).RemovePassword().RemoveSalt();
+            return user.RemovePassword().RemoveSalt();
         }
 
         public async Task<List<User>> GetAll()
